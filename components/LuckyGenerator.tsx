@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { fetchDailyLuckyNumbers } from '../services/geminiService';
 import { LotteryType, LuckyDailyResponse, LotterySet } from '../types';
 import { Ball } from './Ball';
 import { Sparkles, Loader2, Compass, Flame, AlertCircle } from 'lucide-react';
+
+const LOADING_TIPS = [
+  "正在测算今日五行能量...",
+  "正在查阅老黄历宜忌...",
+  "正在定位今日财神方位...",
+  "正在分析天干地支...",
+  "正在推演紫微星象...",
+  "正在捕捉时空灵感..."
+];
 
 interface LuckyGeneratorProps {
   onSave: (data: LotterySet) => void;
@@ -13,6 +22,19 @@ export const LuckyGenerator: React.FC<LuckyGeneratorProps> = ({ onSave }) => {
   const [loading, setLoading] = useState(false);
   const [luckyData, setLuckyData] = useState<LuckyDailyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tipIndex, setTipIndex] = useState(0);
+
+  // Cycle through loading tips
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (loading) {
+      setTipIndex(0);
+      interval = setInterval(() => {
+        setTipIndex((prev) => (prev + 1) % LOADING_TIPS.length);
+      }, 1500);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -43,10 +65,10 @@ export const LuckyGenerator: React.FC<LuckyGeneratorProps> = ({ onSave }) => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+    <div className="bg-gradient-to-br from-indigo-900 to-purple-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden transition-all duration-500">
       {/* Decorative Background Elements */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 translate-y-1/2 -translate-x-1/2"></div>
+      <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2 animate-pulse"></div>
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 translate-y-1/2 -translate-x-1/2 animate-pulse" style={{ animationDelay: '1s' }}></div>
 
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-4">
@@ -56,35 +78,40 @@ export const LuckyGenerator: React.FC<LuckyGeneratorProps> = ({ onSave }) => {
           </h2>
         </div>
 
-        <p className="text-indigo-200 text-sm mb-6">
-          结合今日黄历、五行运势，为您计算今日专属财运组合。
-        </p>
+        {/* Introduction Text - Hide when loading to keep UI clean */}
+        {!luckyData && !loading && (
+          <p className="text-indigo-200 text-sm mb-6">
+            结合今日黄历、五行运势，为您计算今日专属财运组合。
+          </p>
+        )}
 
         <div className="flex gap-4 mb-6">
           <button
             onClick={() => setSelectedType(LotteryType.SSQ)}
+            disabled={loading}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
               selectedType === LotteryType.SSQ 
                 ? 'bg-white text-indigo-900 shadow-lg' 
-                : 'bg-white/10 hover:bg-white/20'
-            }`}
+                : 'bg-white/10 hover:bg-white/20 text-indigo-100'
+            } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             双色球
           </button>
           <button
             onClick={() => setSelectedType(LotteryType.DLT)}
+            disabled={loading}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
               selectedType === LotteryType.DLT 
                 ? 'bg-white text-indigo-900 shadow-lg' 
-                : 'bg-white/10 hover:bg-white/20'
-            }`}
+                : 'bg-white/10 hover:bg-white/20 text-indigo-100'
+            } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             大乐透
           </button>
         </div>
 
         {error && (
-          <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-sm text-red-200 flex items-center gap-2 mb-4">
+          <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-sm text-red-200 flex items-center gap-2 mb-4 animate-fade-in">
             <AlertCircle className="w-4 h-4" />
             {error}
           </div>
@@ -100,9 +127,24 @@ export const LuckyGenerator: React.FC<LuckyGeneratorProps> = ({ onSave }) => {
         )}
 
         {loading && (
-          <div className="flex flex-col items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-yellow-400 mb-2" />
-            <p className="text-indigo-200 text-sm animate-pulse">正在解读天机...</p>
+          <div className="flex flex-col items-center justify-center py-10 min-h-[200px]">
+            {/* Custom Spinner */}
+            <div className="relative mb-6">
+               <div className="absolute inset-0 border-4 border-indigo-400/30 border-t-yellow-400 rounded-full w-16 h-16 animate-spin"></div>
+               <div className="absolute inset-0 flex items-center justify-center">
+                  <Compass className="w-8 h-8 text-yellow-200 animate-pulse" />
+               </div>
+               <div className="w-16 h-16"></div>
+            </div>
+            
+            <div className="flex flex-col items-center space-y-2 text-center h-16">
+               <p className="text-lg font-medium text-yellow-100 animate-fade-in transition-opacity duration-300">
+                 {LOADING_TIPS[tipIndex]}
+               </p>
+               <p className="text-xs text-indigo-300">
+                 Gemini AI 正在解读天机
+               </p>
+            </div>
           </div>
         )}
 
