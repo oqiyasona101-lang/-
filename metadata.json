@@ -1,0 +1,5 @@
+{
+  "name": "LottoGenius (彩票智囊)",
+  "description": "A smart lottery manager for Double Color Ball and Super Lotto. Features AI-powered daily lucky number generation based on the Chinese Almanac (Huang Li) using Gemini.",
+  "requestFramePermissions": []
+}
